@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Worker2 from './worker2?worker'
 
 function App() {
   const [number, setNumber] = useState(10);
@@ -6,7 +7,27 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(0);
 
+
+  const [inputString, setInputString] = useState('');
+  const [reversedString, setReversedString] = useState('');
+  const [loadingText, setLoadingText] = useState(false);
+
   const worker = useRef(null);
+  const worker2Ref = useRef(null);
+
+  useEffect(() => {
+    worker2Ref.current = new Worker2()
+    // Écouter les messages du Worker
+    worker2Ref.current.onmessage = (e) => {
+      setReversedString(e.data);  // Mettre à jour le résultat
+      setLoadingText(false);  // Terminer le chargement
+    };
+
+    // Nettoyer le Worker lorsqu'on quitte le composant
+    return () => {
+      worker2Ref.current.terminate();
+    };
+  }, []);
 
   useEffect(() => {
     worker.current = new Worker(new URL('./worker.js', import.meta.url));
@@ -33,6 +54,12 @@ function App() {
     }
     return () => clearInterval(interval);
   }, [loading]);
+
+  const handleReverseString = () => {
+    setLoadingText(true);
+    setReversedString('');
+    worker2Ref.current.postMessage({ type: 'reverseString', string: inputString });
+  };
 
 
   // Fonction pour démarrer le calcul Fibonacci
@@ -109,6 +136,24 @@ function App() {
         </div>
       )}
       {result !== null && !loading && <p>Fibonacci result: {result}</p>}
+    </div>
+    <div>
+      <h1>String Reversal with Web Worker</h1>
+      <div>
+        <label>
+          Enter a string: 
+          <input
+            type="text"
+            value={inputString}
+            onChange={(e) => setInputString(e.target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <button onClick={handleReverseString}>Reverse String</button>
+      </div>
+      {loadingText && <p>Reversing...</p>}
+      {reversedString && !loadingText && <p>Reversed String: {reversedString}</p>}
     </div>
     </>
   );
