@@ -25,7 +25,7 @@ function App() {
 
     // Nettoyer le Worker lorsqu'on quitte le composant
     return () => {
-      worker2Ref.current.terminate();
+      worker2Ref.current.termianate();
     };
   }, []);
 
